@@ -14,11 +14,14 @@ import Product from '../components/Product';
 import LinkContainer from 'react-router-bootstrap/LinkContainer';
 import { createSearchParams } from 'react-router-dom';
 
+// Definisco una funzione riduttrice che aggiorna lo stato in base all'azione ricevuta
 const reducer = (state, action) => {
   switch (action.type) {
     case 'FETCH_REQUEST':
+      // Se l'azione è di tipo 'FETCH_REQUEST', imposto la proprietà loading a true e mantengo le altre proprietà invariate
       return { ...state, loading: true };
     case 'FETCH_SUCCESS':
+      // Se l'azione è di tipo 'FETCH_SUCCESS', imposto la proprietà loading a false e le proprietà products, page, pages e countProducts al payload dell'azione
       return {
         ...state,
         products: action.payload.products,
@@ -28,28 +31,31 @@ const reducer = (state, action) => {
         loading: false,
       };
     case 'FETCH_FAIL':
+      // Se l'azione è di tipo 'FETCH_FAIL', imposto la proprietà loading a false, la proprietà error al payload dell'azione e mantengo le altre proprietà invariate
       return { ...state, loading: false, error: action.payload };
 
     default:
+      // Se l'azione non è di nessuno dei tipi precedenti, restituisco lo stato invariato
       return state;
   }
 };
 
 const prices = [
   {
-    name: '$1 to $50',
+    name: '1€ to 50€',
     value: '1-50',
   },
   {
-    name: '$51 to $200',
+    name: '51€ to 200€',
     value: '51-200',
   },
   {
-    name: '$201 to $1000',
+    name: '201€ to 1000€',
     value: '201-1000',
   },
 ];
 
+// Definisco un array di oggetti che rappresentano le valutazioni dei prodotti
 export const ratings = [
   {
     name: '4stars & up',
@@ -72,25 +78,37 @@ export const ratings = [
   },
 ];
 
+// Definisco un componente React chiamato SearchScreen che non accetta props
 export default function SearchScreen() {
+  // Uso l'hook useNavigate per ottenere una funzione che permette di navigare tra le rotte
   const navigate = useNavigate();
+  // Uso l'hook useLocation per ottenere l'URL corrente
   const { search } = useLocation();
-  const sp = new URLSearchParams(search); // /search?category=Shirts
+  // Creo un oggetto URLSearchParams con la stringa di ricerca dell'URL
+  const sp = new URLSearchParams(search);
+  // Ottengo il valore dei parametri 'category', 'query', 'price', 'rating' e 'order' dall'oggetto URLSearchParams o 'all' se non esistono
   const category = sp.get('category') || 'all';
   const query = sp.get('query') || 'all';
   const price = sp.get('price') || 'all';
   const rating = sp.get('rating') || 'all';
   const order = sp.get('order') || 'newest';
+  // Ottengo il valore del parametro 'page' dall'oggetto URLSearchParams o 1 se non esiste
   const page = sp.get('page') || 1;
 
+  // Uso l'hook useReducer per gestire lo stato del componente con la funzione riduttrice definita sopra
+  // Lo stato iniziale è un oggetto con cinque proprietà: loading, error, products, pages e countProducts
+  // L'hook useReducer restituisce lo stato corrente e la funzione dispatch
   const [{ loading, error, products, pages, countProducts }, dispatch] =
     useReducer(reducer, {
       loading: true,
       error: '',
     });
+  // Uso l'hook useEffect per eseguire un effetto collaterale dopo il rendering del componente
   useEffect(() => {
+    // Definisco una funzione asincrona che richiede i dati dei prodotti tramite axios e aggiorna lo stato in base al risultato
     const fetchData = async () => {
       try {
+        // Creo un oggetto con i parametri di ricerca da inviare all'API
         const queryParams = {
           page: page,
           query: query,
@@ -100,38 +118,53 @@ export default function SearchScreen() {
           order: order,
         };
 
-        // Usa la funzione createSearchParams per creare una stringa di query da un oggetto di parametri
+        // Creo una stringa con i parametri di ricerca usando il metodo createSearchParams
         const queryStringParams = createSearchParams(queryParams).toString();
 
-        // Usa il campo search invece di pathname per passare la stringa di query
+        // Richiedo i dati dei prodotti all'API del server usando la stringa di ricerca
         const { data } = await axios.get(
           `/api/products/search?${queryStringParams}`
         );
+        // Invio un'azione di tipo 'FETCH_SUCCESS' alla funzione riduttrice con i dati dei prodotti, il numero di pagina, il numero di pagine e il numero totale dei prodotti come payload
         dispatch({ type: 'FETCH_SUCCESS', payload: data });
       } catch (err) {
+        // Se la richiesta fallisce, catturo l'errore e invio un'azione di tipo 'FETCH_FAIL' alla funzione riduttrice con l'errore come payload
         dispatch({
           type: 'FETCH_FAIL',
           payload: getError(error),
         });
       }
     };
+    // Invoco la funzione asincrona per richiedere i dati dei prodotti
     fetchData();
-  }, [category, error, order, page, price, query, rating]);
+  }, [category, error, order, page, price, query, rating]); // Eseguo l'effetto solo quando una di queste dipendenze cambia
+  // Restituisco il componente React che mostra i prodotti filtrati in base ai parametri di ricerca
 
+  // Dichiara una variabile di stato chiamata categories e una funzione per aggiornarla
   const [categories, setCategories] = useState([]);
+
+  // Usa l'hook useEffect per eseguire una funzione quando il componente si monta o si aggiorna
   useEffect(() => {
+    // Definisce una funzione asincrona per recuperare le categorie dei prodotti dal server
     const fetchCategories = async () => {
       try {
+        // Usa axios per fare una richiesta GET all'endpoint /api/products/categories
         const { data } = await axios.get(`/api/products/categories`);
+        // Usa la funzione setCategories per aggiornare lo stato delle categorie con i dati ricevuti
         setCategories(data);
       } catch (err) {
+        // In caso di errore, mostra un messaggio con la funzione toast.error
         toast.error(getError(err));
       }
     };
+    // Chiama la funzione fetchCategories
     fetchCategories();
+    // Aggiunge dispatch come dipendenza dell'hook useEffect, in modo che la funzione venga rieseguita quando cambia il valore di dispatch
   }, [dispatch]);
 
+  // Definisce una funzione per creare un URL di filtro in base ai parametri passati
   const getFilterUrl = (filter) => {
+    // Assegna i valori dei parametri di filtro alle variabili corrispondenti, usando i valori di default se i parametri sono vuoti
     const filterPage = filter.page || page;
     const filterCategory = filter.category || category;
     const filterQuery = filter.query || query;
@@ -139,7 +172,7 @@ export default function SearchScreen() {
     const filterPrice = filter.price || price;
     const sortOrder = filter.order || order;
 
-    // Crea un oggetto di parametri con i valori dei filtri
+    // Crea un oggetto queryParams con le chiavi e i valori dei parametri di filtro
     const queryParams = {
       category: filterCategory,
       query: filterQuery,
@@ -149,10 +182,10 @@ export default function SearchScreen() {
       page: filterPage,
     };
 
-    // Usa la funzione createSearchParams per creare una stringa di query da un oggetto di parametri
+    // Usa la funzione createSearchParams per creare una stringa di query con i parametri
     const queryStringParams = createSearchParams(queryParams).toString();
 
-    // Restituisci un oggetto con i campi pathname e search
+    // Restituisce un oggetto con il pathname e la stringa di query per l'URL di filtro
     return {
       pathname: '/search',
       search: queryStringParams,
@@ -162,11 +195,11 @@ export default function SearchScreen() {
   return (
     <div>
       <Helmet>
-        <title>Search Products</title>
+        <title>Cerca Prodotti </title>
       </Helmet>
       <Row>
         <Col md={3}>
-          <h3>Department</h3>
+          <h3>Categoria</h3>
           <div>
             <ul>
               <li>
@@ -174,7 +207,7 @@ export default function SearchScreen() {
                   className={'all' === category ? 'text-bold' : ''}
                   to={getFilterUrl({ category: 'all' })}
                 >
-                  Any
+                  Qualsiasi
                 </Link>
               </li>
               {categories.map((c) => (
@@ -190,14 +223,14 @@ export default function SearchScreen() {
             </ul>
           </div>
           <div>
-            <h3>Price</h3>
+            <h3>Prezzo</h3>
             <ul>
               <li>
                 <Link
                   className={'all' === price ? 'text-bold' : ''}
                   to={getFilterUrl({ price: 'all' })}
                 >
-                  Any
+                  Qualsiasi
                 </Link>
               </li>
               {prices.map((p) => (
@@ -213,7 +246,7 @@ export default function SearchScreen() {
             </ul>
           </div>
           <div>
-            <h3>Avg. Customer Review</h3>
+            <h3>Media Recensioni</h3>
             <ul>
               {ratings.map((r) => (
                 <li key={r.name}>
@@ -246,7 +279,7 @@ export default function SearchScreen() {
               <Row className="justify-content-between mb-3">
                 <Col md={6}>
                   <div>
-                    {countProducts === 0 ? 'No' : countProducts} Results
+                    {countProducts === 0 ? 'No' : countProducts} Risultati
                     {query !== 'all' && ' : ' + query}
                     {category !== 'all' && ' : ' + category}
                     {price !== 'all' && ' : Price ' + price}
@@ -265,22 +298,22 @@ export default function SearchScreen() {
                   </div>
                 </Col>
                 <Col className="text-end">
-                  Sort by{' '}
+                  Ordine per{' '}
                   <select
                     value={order}
                     onChange={(e) => {
                       navigate(getFilterUrl({ order: e.target.value }));
                     }}
                   >
-                    <option value="newest">Newest Arrivals</option>
-                    <option value="lowest">Price: Low to High</option>
-                    <option value="highest">Price: High to Low</option>
-                    <option value="toprated">Avg. Customer Reviews</option>
+                    <option value="newest">Nuovi Arrivi</option>
+                    <option value="lowest">Prezzo: Basso a Alto</option>
+                    <option value="highest">Prezzo: Alto a Basso</option>
+                    <option value="toprated">Media Recensioni</option>
                   </select>
                 </Col>
               </Row>
               {products.length === 0 && (
-                <MessageBox>No Product Found</MessageBox>
+                <MessageBox>Nessun prodotto trovato</MessageBox>
               )}
 
               <Row>

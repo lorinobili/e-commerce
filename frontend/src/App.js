@@ -26,12 +26,10 @@ import axios from 'axios';
 import SearchBox from './components/SearchBox';
 import SearchScreen from './screens/SearchScreen';
 import ProtectedRoute from './components/ProtectedRoute';
-import DashboardScreen from './screens/DashboardScreen';
 import AdminRoute from './components/AdminRoute';
 import ProductListScreen from './screens/ProductListScreen';
 import ProductEditScreen from './screens/ProductEditScreen';
 import OrderListScreen from './screens/OrderListScreen';
-import UserListScreen from './screens/UserListScreen';
 
 function App() {
   const { state, dispatch: ctxDispatch } = useContext(Store);
@@ -83,7 +81,7 @@ function App() {
                 <SearchBox />
                 <Nav className="me-auto  w-100  justify-content-end">
                   <Link to="/cart" className="nav-link">
-                    Cart
+                    Carrello
                     {cart.cartItems.length > 0 && (
                       <Badge pill bg="danger">
                         {cart.cartItems.reduce((a, c) => a + c.quantity, 0)}
@@ -93,10 +91,10 @@ function App() {
                   {userInfo ? (
                     <NavDropdown title={userInfo.name} id="basic-nav-dropdown">
                       <LinkContainer to="/profile">
-                        <NavDropdown.Item>User Profile</NavDropdown.Item>
+                        <NavDropdown.Item>Profilo Utente</NavDropdown.Item>
                       </LinkContainer>
                       <LinkContainer to="/orderhistory">
-                        <NavDropdown.Item>Order History</NavDropdown.Item>
+                        <NavDropdown.Item>Cronologia Ordini</NavDropdown.Item>
                       </LinkContainer>
                       <NavDropdown.Divider />
                       <Link
@@ -104,27 +102,21 @@ function App() {
                         to="#signout"
                         onClick={signoutHandler}
                       >
-                        Sign Out
+                        Log Out
                       </Link>
                     </NavDropdown>
                   ) : (
                     <Link className="nav-link" to="/signin">
-                      Sign In
+                      Log In
                     </Link>
                   )}
                   {userInfo && userInfo.isAdmin && (
                     <NavDropdown title="Admin" id="admin-nav-dropdown">
-                      <LinkContainer to="/admin/dashboard">
-                        <NavDropdown.Item>Dashboard</NavDropdown.Item>
-                      </LinkContainer>
                       <LinkContainer to="/admin/products">
-                        <NavDropdown.Item>Products</NavDropdown.Item>
+                        <NavDropdown.Item>Prodotti</NavDropdown.Item>
                       </LinkContainer>
                       <LinkContainer to="/admin/orders">
-                        <NavDropdown.Item>Orders</NavDropdown.Item>
-                      </LinkContainer>
-                      <LinkContainer to="/admin/users">
-                        <NavDropdown.Item>Users</NavDropdown.Item>
+                        <NavDropdown.Item>Ordini</NavDropdown.Item>
                       </LinkContainer>
                     </NavDropdown>
                   )}
@@ -142,7 +134,7 @@ function App() {
         >
           <Nav className="flex-column text-white w-100 p-2">
             <Nav.Item>
-              <strong>Categories</strong>
+              <strong>Categorie</strong>
             </Nav.Item>
             {categories.map((category) => (
               <Nav.Item key={category}>
@@ -198,14 +190,7 @@ function App() {
               ></Route>
               <Route path="/payment" element={<PaymentMethodScreen />}></Route>
               {/* Admin Routes */}
-              <Route
-                path="/admin/dashboard"
-                element={
-                  <AdminRoute>
-                    <DashboardScreen />
-                  </AdminRoute>
-                }
-              ></Route>
+
               <Route
                 path="/admin/orders"
                 element={
@@ -214,14 +199,7 @@ function App() {
                   </AdminRoute>
                 }
               ></Route>
-              <Route
-                path="/admin/users"
-                element={
-                  <AdminRoute>
-                    <UserListScreen />
-                  </AdminRoute>
-                }
-              ></Route>
+
               <Route
                 path="/admin/products"
                 element={
@@ -244,7 +222,7 @@ function App() {
           </Container>
         </main>
         <footer>
-          <div className="text-center">All rights reserved</div>
+          <div className="text-center">Tutti i diritti sono riservati</div>
         </footer>
       </div>
     </BrowserRouter>
